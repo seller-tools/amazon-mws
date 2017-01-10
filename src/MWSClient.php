@@ -496,6 +496,19 @@ class MWSClient{
                         $array['small_image'] = str_replace('._SL75_', '._SL50_', $image);
                         $array['large_image'] = str_replace('._SL75_', '', $image);;
                     }
+
+                    // Relationships
+                    if (isset($product['Products']['Product']['Relationships']['VariationParent'])){
+                        $array['parent_asin'] = $product['Products']['Product']['Relationships']['VariationParent']['Identifier']['MarketplaceASIN']['ASIN'];
+                    }
+
+                    // Sales rang
+                    $array['ranks'] = [];
+                    foreach ($product['Products']['Product']['SalesRankings'] as $rank) {
+                        $array['ranks'][$rank['SalesRank']['ProductCategoryId']] = $rank['SalesRank']['Rank'];
+                    }
+
+
                     $found[$asin] = $array;
                 }
             }
