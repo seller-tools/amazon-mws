@@ -1,5 +1,5 @@
 {
-    "name": "mcs/amazon-mws",
+    "name": "seller-tools/amazon-mws",
     "description": "Library to interface with Amazon MWS",
     "license": "MIT",
     "keywords": ["amazon", "mws"],
@@ -8,6 +8,10 @@
         {
             "name": "Michiel Meertens",
             "email": "meertensmichiel28@gmail.com"
+        },
+        {
+            "name": "Nikolaj Janko",
+            "email": "nikolaj.janko@gmail.com"
         }
     ],
     "require": {
