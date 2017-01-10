@@ -499,13 +499,16 @@ class MWSClient{
 
                     // Relationships
                     if (isset($product['Products']['Product']['Relationships']['VariationParent'])){
-                        $array['parent_asin'] = $product['Products']['Product']['Relationships']['VariationParent']['Identifier']['MarketplaceASIN']['ASIN'];
+                        $array['parent_asin'] = $product['Products']['Product']['Relationships']['VariationParent']['Identifiers']['MarketplaceASIN']['ASIN'];
                     }
 
                     // Sales rang
                     $array['ranks'] = [];
-                    foreach ($product['Products']['Product']['SalesRankings'] as $rank) {
-                        $array['ranks'][$rank['SalesRank']['ProductCategoryId']] = $rank['SalesRank']['Rank'];
+
+                    if(isset($product['Products']['Product']['SalesRankings']['SalesRank'])){
+                        foreach ($product['Products']['Product']['SalesRankings']['SalesRank'] as $rank) {
+                            $array['ranks'][$rank['ProductCategoryId']] = (int)$rank['Rank'];
+                        }
                     }
 
 
