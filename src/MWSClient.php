@@ -488,6 +488,8 @@ class MWSClient{
                     foreach ($product['Products']['Product']['AttributeSets']['ItemAttributes'] as $key => $value) {
                         if (is_string($key) && is_string($value)) {
                             $array[$key] = $value;    
+                        }else if(is_string($key) && is_array($value)) {
+                            $array[$key] = $value;
                         }
                     }
                     if (isset($product['Products']['Product']['AttributeSets']['ItemAttributes']['SmallImage'])) {
