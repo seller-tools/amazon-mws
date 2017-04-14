@@ -500,14 +500,30 @@ class MWSClient{
                     }
 
                     // Relationships
-                    if (isset($product['Products']['Product']['Relationships']['VariationParent'])){
-                        $array['parent_asin'] = $product['Products']['Product']['Relationships']['VariationParent']['Identifiers']['MarketplaceASIN']['ASIN'];
+                    if (isset($product['Products']['Product']['Relationships'])) {
+
+                        $relationships = $product['Products']['Product']['Relationships'];
+
+                        if (isset($relationships['VariationParent'])) {
+
+                            $array['parent_asin'] = $relationships['VariationParent']['Identifiers']['MarketplaceASIN']['ASIN'];
+
+                        } elseif (isset($relationships['VariationChild'])) {
+
+                            if (isset($relationships['VariationChild'][0])) {
+                                foreach ($relationships['VariationChild'] as $child) {
+                                    $array['childs'][] = $child['Identifiers']['MarketplaceASIN']['ASIN'];
+                                }
+                            } else {
+                                $array['childs'][] = $relationships['VariationChild']['Identifiers']['MarketplaceASIN']['ASIN'];
+                            }
+                        }
                     }
 
-                    // Sales rang
-                    $array['ranks'] = [];
 
+                    // Sales rang
                     if(isset($product['Products']['Product']['SalesRankings']['SalesRank'])){
+                        $array['ranks'] = [];
                         foreach ($product['Products']['Product']['SalesRankings']['SalesRank'] as $rank) {
                             $array['ranks'][$rank['ProductCategoryId']] = (int)$rank['Rank'];
                         }
