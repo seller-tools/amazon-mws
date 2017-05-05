@@ -524,7 +524,10 @@ class MWSClient{
                     // Sales rang
                     if(isset($product['Products']['Product']['SalesRankings']['SalesRank'])){
                         $array['ranks'] = [];
-                        foreach ($product['Products']['Product']['SalesRankings']['SalesRank'] as $rank) {
+                        $tmpRanks = $product['Products']['Product']['SalesRankings']['SalesRank'];
+                        if(is_array($tmpRanks) && array_key_exists('ProductCategoryId', $tmpRanks))
+                            $array['ranks'][$tmpRanks['ProductCategoryId']] = (int)$tmpRanks['Rank'];
+                        else foreach ($tmpRanks as $rank) {
                             $array['ranks'][$rank['ProductCategoryId']] = (int)$rank['Rank'];
                         }
                     }
