@@ -473,21 +473,24 @@ class MWSClient{
     
         $found = [];
         $not_found = [];
-        
+
         if (isset($response['GetMatchingProductForIdResult']) && is_array($response['GetMatchingProductForIdResult'])) {
-            $array = [];
+
             foreach ($response['GetMatchingProductForIdResult'] as $product) {
-                $asin = $product['@attributes']['Id'];
+                $productId = $product['@attributes']['Id'];
                 if ($product['@attributes']['status'] != 'Success') {
-                    $not_found[] = $asin;    
+                    $not_found[] = $productId;
                 } else {
                     $array = [];
                     if (!isset($product['Products']['Product']['AttributeSets'])) {
-                        $product['Products']['Product'] = $product['Products']['Product'][0];    
+                        $product['Products']['Product'] = $product['Products']['Product'][0];
+                    }
+                    if (isset($product['Products']['Product']['Identifiers']['MarketplaceASIN']['ASIN'])) {
+                        $array['asin'] = $product['Products']['Product']['Identifiers']['MarketplaceASIN']['ASIN'];
                     }
                     foreach ($product['Products']['Product']['AttributeSets']['ItemAttributes'] as $key => $value) {
                         if (is_string($key) && is_string($value)) {
-                            $array[$key] = $value;    
+                            $array[$key] = $value;
                         }else if(is_string($key) && is_array($value)) {
                             $array[$key] = $value;
                         }
@@ -524,17 +527,20 @@ class MWSClient{
                     // Sales rang
                     if(isset($product['Products']['Product']['SalesRankings']['SalesRank'])){
                         $array['ranks'] = [];
-                        foreach ($product['Products']['Product']['SalesRankings']['SalesRank'] as $rank) {
+                        $tmpRanks = $product['Products']['Product']['SalesRankings']['SalesRank'];
+                        if(is_array($tmpRanks) && array_key_exists('ProductCategoryId', $tmpRanks))
+                            $array['ranks'][$tmpRanks['ProductCategoryId']] = (int)$tmpRanks['Rank'];
+                        else foreach ($tmpRanks as $rank) {
                             $array['ranks'][$rank['ProductCategoryId']] = (int)$rank['Rank'];
                         }
                     }
 
 
-                    $found[$asin] = $array;
+                    $found[$productId] = $array;
                 }
             }
         }
-        
+
         return [
             'found' => $found,
             'not_found' => $not_found
