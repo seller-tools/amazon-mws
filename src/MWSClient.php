@@ -852,7 +852,7 @@ class MWSClient{
             if (is_string($result)) {
                 $csv = Reader::createFromString(utf8_encode($result));
                 $csv->setDelimiter("\t");
-                $headers = $csv->fetchOne();
+                $headers = str_replace("-", "_", $csv->fetchOne());
                 $result = [];
                 foreach ($csv->setOffset(1)->fetchAll() as $row) {
                     $result[] = array_combine($headers, $row);    
