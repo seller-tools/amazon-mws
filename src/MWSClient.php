@@ -473,21 +473,24 @@ class MWSClient{
     
         $found = [];
         $not_found = [];
-        
+
         if (isset($response['GetMatchingProductForIdResult']) && is_array($response['GetMatchingProductForIdResult'])) {
-            $array = [];
+
             foreach ($response['GetMatchingProductForIdResult'] as $product) {
-                $asin = $product['@attributes']['Id'];
+                $productId = $product['@attributes']['Id'];
                 if ($product['@attributes']['status'] != 'Success') {
-                    $not_found[] = $asin;    
+                    $not_found[] = $productId;
                 } else {
                     $array = [];
                     if (!isset($product['Products']['Product']['AttributeSets'])) {
-                        $product['Products']['Product'] = $product['Products']['Product'][0];    
+                        $product['Products']['Product'] = $product['Products']['Product'][0];
+                    }
+                    if (isset($product['Products']['Product']['Identifiers']['MarketplaceASIN']['ASIN'])) {
+                        $array['asin'] = $product['Products']['Product']['Identifiers']['MarketplaceASIN']['ASIN'];
                     }
                     foreach ($product['Products']['Product']['AttributeSets']['ItemAttributes'] as $key => $value) {
                         if (is_string($key) && is_string($value)) {
-                            $array[$key] = $value;    
+                            $array[$key] = $value;
                         }else if(is_string($key) && is_array($value)) {
                             $array[$key] = $value;
                         }
@@ -533,11 +536,11 @@ class MWSClient{
                     }
 
 
-                    $found[$asin] = $array;
+                    $found[$productId] = $array;
                 }
             }
         }
-        
+
         return [
             'found' => $found,
             'not_found' => $not_found
@@ -847,9 +850,9 @@ class MWSClient{
             ]);
             
             if (is_string($result)) {
-                $csv = Reader::createFromString($result);
+                $csv = Reader::createFromString(utf8_encode($result));
                 $csv->setDelimiter("\t");
-                $headers = $csv->fetchOne();
+                $headers = str_replace("-", "_", $csv->fetchOne());
                 $result = [];
                 foreach ($csv->setOffset(1)->fetchAll() as $row) {
                     $result[] = array_combine($headers, $row);    
