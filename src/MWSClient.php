@@ -416,68 +416,71 @@ class MWSClient{
             return false;    
         }
     }
-    
+
     /**
      * Returns a list of products and their attributes, based on a list of ASIN, GCID, SellerSKU, UPC, EAN, ISBN, and JAN values.
      * @param array $asin_array A list of id's
-     * @param string [$type = 'ASIN']  the identifier name
+     * @param string $type
+     * @param string $prefix
      * @return array
+     * @throws Exception
+     * @internal param $string [$type = 'ASIN']  the identifier name
      */
-    public function GetMatchingProductForId(array $asin_array, $type = 'ASIN')
-    { 
+    public function GetMatchingProductForId(array $asin_array, $type = 'ASIN', $prefix = '')
+    {
         $asin_array = array_unique($asin_array);
-        
+
         if(count($asin_array) > 5) {
-            throw new Exception('Maximum number of id\'s = 5');    
+            throw new Exception('Maximum number of id\'s = 5');
         }
-        
+
         $counter = 1;
         $array = [
             'MarketplaceId' => $this->config['Marketplace_Id'],
             'IdType' => $type
         ];
-        
+
         foreach($asin_array as $asin){
-            $array['IdList.Id.' . $counter] = $asin; 
+            $array['IdList.Id.' . $counter] = $asin;
             $counter++;
         }
-        
+
         $response = $this->request(
             'GetMatchingProductForId',
             $array,
             null,
             true
-        ); 
-        
+        );
+
         $languages = [
             'de-DE', 'en-EN', 'es-ES', 'fr-FR', 'it-IT', 'en-US'
         ];
-        
+
         $replace = [
             '</ns2:ItemAttributes>' => '</ItemAttributes>'
         ];
-        
+
         foreach($languages as $language) {
             $replace['<ns2:ItemAttributes xml:lang="' . $language . '">'] = '<ItemAttributes><Language>' . $language . '</Language>';
         }
-        
+
         $replace['ns2:'] = '';
-        
+
         $response = $this->xmlToArray(strtr($response, $replace));
-        
+
         if (isset($response['GetMatchingProductForIdResult']['@attributes'])) {
             $response['GetMatchingProductForIdResult'] = [
                 0 => $response['GetMatchingProductForIdResult']
-            ];    
+            ];
         }
-    
+
         $found = [];
         $not_found = [];
 
         if (isset($response['GetMatchingProductForIdResult']) && is_array($response['GetMatchingProductForIdResult'])) {
 
             foreach ($response['GetMatchingProductForIdResult'] as $product) {
-                $productId = $product['@attributes']['Id'];
+                $productId = trim($product['@attributes']['Id']);
                 if ($product['@attributes']['status'] != 'Success') {
                     $not_found[] = $productId;
                 } else {
@@ -536,7 +539,7 @@ class MWSClient{
                     }
 
 
-                    $found[$productId] = $array;
+                    $found[$prefix . $productId] = $array;
                 }
             }
         }
