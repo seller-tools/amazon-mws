@@ -15,6 +15,17 @@ class TestClient extends TestCase
         $this->assertFalse($bool);
     }
 
+    public function test_get_one_matching_product()
+    {
+        $products = $this->handleThrottling(function($asins)  {
+            return $this->getClient()->GetMatchingProducts($asins);
+        }, [['B00X4MDXOQ']]);
+
+        $this->assertNotEmpty($products['found'], 'Should get 1 product!');
+        $this->assertArrayHasKey('asin', end($products['found']), 'Product should have a asin!');
+
+    }
+
     public function test_get_matching_products()
     {
         $asins = ['B00X4MDXOQ', 'B01HJ0VN40', 'B0711DGW5V', 'B00NLKAVL4', 'B010OMOSVK'];
@@ -40,7 +51,6 @@ class TestClient extends TestCase
         // test max asins
         $asins = ['B00X4MDXOQ', 'B01HJ0VN40', 'B0711DGW5V', 'B00NLKAVL4', 'B010OMOSVK',
             '_B00X4MDXOQ', '_B01HJ0VN40', '-B0711DGW5V', 'aB00NLKAVL4', 'asdB010OMOSVK', 'asdB010OMOSaVK'];
-
 
         $exception = null;
         try {
@@ -83,6 +93,7 @@ class TestClient extends TestCase
         $this->assertEquals(2, count($products['found']), 'Should find 2 products!');
         $product = end($products['found']);
         $this->assertArrayHasKey('description', $product, 'Product should have a description!');
+        $this->assertArrayHasKey('asin', $product, 'Product should have a asin!');
         $this->assertArrayHasKey('seller-sku', $product, 'Product should have a seller-sku!!');
     }
 

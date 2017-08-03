@@ -446,9 +446,9 @@ class MWSClient{
             false
         );
 
-        if (isset($response['GetMatchingProductForIdResult']['@attributes'])) {
-            $response['GetMatchingProductForIdResult'] = [
-                0 => $response['GetMatchingProductForIdResult']
+        if (isset($response['GetMatchingProductResult']['@attributes'])) {
+            $response['GetMatchingProductResult'] = [
+                $response['GetMatchingProductResult']
             ];
         }
 
@@ -519,7 +519,7 @@ class MWSClient{
                     }
 
                     if ($merge) {
-                        $array = array_merge($product, $products[$asin]);
+                        $array = array_merge($array, $products[$asin]);
                     }
 
                     $found[$asin] = $array;
