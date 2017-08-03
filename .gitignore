@@ -4,3 +4,6 @@ xml.xml
 xsd/
 documentor.php
 test.csv
+tests/config.ini
+.idea
+.DS_Store

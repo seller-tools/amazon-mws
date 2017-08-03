@@ -102,6 +102,12 @@ class MWSEndPoint{
             'path' => '/Products/2011-10-01',
             'date' => '2011-10-01'
         ],
+        'GetMatchingProduct' => [
+            'method' => 'POST',
+            'action' => 'GetMatchingProduct',
+            'path' => '/Products/2011-10-01',
+            'date' => '2011-10-01'
+        ],
         'GetCompetitivePricingForASIN' => [
             'method' => 'POST',
             'action' => 'GetCompetitivePricingForASIN',
