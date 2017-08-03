@@ -498,10 +498,10 @@ class MWSClient{
 
                             if (isset($relationships['VariationChild'][0])) {
                                 foreach ($relationships['VariationChild'] as $child) {
-                                    $array['childs'][] = $child['Identifiers']['MarketplaceASIN']['ASIN'];
+                                    $array['child_asins'][] = $child['Identifiers']['MarketplaceASIN']['ASIN'];
                                 }
                             } else {
-                                $array['childs'][] = $relationships['VariationChild']['Identifiers']['MarketplaceASIN']['ASIN'];
+                                $array['child_asins'][] = $relationships['VariationChild']['Identifiers']['MarketplaceASIN']['ASIN'];
                             }
                         }
                     }
@@ -1092,10 +1092,10 @@ class MWSClient{
 
                 if (isset($relationships['VariationChild'][0])) {
                     foreach ($relationships['VariationChild'] as $child) {
-                        $array['childs'][] = $child['Identifiers']['MarketplaceASIN']['ASIN'];
+                        $array['child_asins'][] = $child['Identifiers']['MarketplaceASIN']['ASIN'];
                     }
                 } else {
-                    $array['childs'][] = $relationships['VariationChild']['Identifiers']['MarketplaceASIN']['ASIN'];
+                    $array['child_asins'][] = $relationships['VariationChild']['Identifiers']['MarketplaceASIN']['ASIN'];
                 }
             }
         }
