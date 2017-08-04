@@ -463,60 +463,7 @@ class MWSClient{
                 } else {
                     $product = $result['Product'];
 
-                    $array = [];
-
-                    if (!isset($product['AttributeSets'])) {
-                        $product = $product[0];
-                    }
-                    if (isset($product['Identifiers']['MarketplaceASIN']['ASIN'])) {
-                        $array['asin'] = $product['Identifiers']['MarketplaceASIN']['ASIN'];
-                    }
-                    foreach ($product['AttributeSets']['ItemAttributes'] as $key => $value) {
-                        if (is_string($key) && is_string($value)) {
-                            $array[$key] = $value;
-                        }else if(is_string($key) && is_array($value)) {
-                            $array[$key] = $value;
-                        }
-                    }
-                    if (isset($product['AttributeSets']['ItemAttributes']['SmallImage'])) {
-                        $image = $product['AttributeSets']['ItemAttributes']['SmallImage']['URL'];
-                        $array['medium_image'] = $image;
-                        $array['small_image'] = str_replace('._SL75_', '._SL50_', $image);
-                        $array['large_image'] = str_replace('._SL75_', '', $image);;
-                    }
-
-                    // Relationships
-                    if (isset($product['Relationships'])) {
-
-                        $relationships = $product['Relationships'];
-
-                        if (isset($relationships['VariationParent'])) {
-
-                            $array['parent_asin'] = $relationships['VariationParent']['Identifiers']['MarketplaceASIN']['ASIN'];
-
-                        } elseif (isset($relationships['VariationChild'])) {
-
-                            if (isset($relationships['VariationChild'][0])) {
-                                foreach ($relationships['VariationChild'] as $child) {
-                                    $array['child_asins'][] = $child['Identifiers']['MarketplaceASIN']['ASIN'];
-                                }
-                            } else {
-                                $array['child_asins'][] = $relationships['VariationChild']['Identifiers']['MarketplaceASIN']['ASIN'];
-                            }
-                        }
-                    }
-
-
-                    // Sales rang
-                    if(isset($product['SalesRankings']['SalesRank'])){
-                        $array['ranks'] = [];
-                        $tmpRanks = $product['SalesRankings']['SalesRank'];
-                        if(is_array($tmpRanks) && array_key_exists('ProductCategoryId', $tmpRanks))
-                            $array['ranks'][$tmpRanks['ProductCategoryId']] = (int)$tmpRanks['Rank'];
-                        else foreach ($tmpRanks as $rank) {
-                            $array['ranks'][$rank['ProductCategoryId']] = (int)$rank['Rank'];
-                        }
-                    }
+                    $array = $this->getProductData($product);
 
                     if ($merge) {
                         $array = array_merge($array, $products[$asin]);
@@ -535,16 +482,21 @@ class MWSClient{
 
     /**
      * Returns a list of products and their attributes, based on a list of ASIN, GCID, SellerSKU, UPC, EAN, ISBN, and JAN values.
-     * @param array $asin_array A list of id's
+     * @param array $products A list of id's
      * @param string $type
      * @param string $prefix
      * @return array
      * @throws Exception
      * @internal param $string [$type = 'ASIN']  the identifier name
      */
-    public function GetMatchingProductForId(array $asin_array, $type = 'ASIN', $prefix = '')
+    public function GetMatchingProductForId(array $products, $type = 'ASIN', $prefix = '')
     {
-        $asin_array = array_unique($asin_array);
+        $merge = is_array($products[key($products)]);
+        if ($merge) {
+            $asin_array = array_unique(array_keys($products));
+        } else {
+            $asin_array = array_unique($products);
+        }
 
         if(count($asin_array) > 5) {
             throw new Exception('Maximum number of id\'s = 5');
@@ -584,12 +536,18 @@ class MWSClient{
                 if ($product['@attributes']['status'] != 'Success') {
                     $not_found[] = $productId;
                 } else {
-                    $array = $this->parseProductFromXML($product);
+
+                    $product = $product['Products']['Product'];
+
+                    $array = $this->getProductData($product);
+
+                    if ($merge && isset($products[$productId])) {
+                        $array = array_merge($array, $products[$productId]);
+                    }
 
                     $found[$prefix . $productId] = $array;
                 }
             }
-
         }
 
         return [
@@ -855,13 +813,14 @@ class MWSClient{
 
         return json_decode(json_encode(simplexml_load_string(strtr($xmlstring, $replace))), true);
     }
-    
+
     /**
      * Creates a report request and submits the request to Amazon MWS.
      * @param string $report (http://docs.developer.amazonservices.com/en_US/reports/Reports_ReportType.html)
-     * @param DateTime [$StartDate = null]
-     * @param EndDate [$EndDate = null]
+     * @param null $StartDate
+     * @param null $EndDate
      * @return string ReportRequestId
+     * @throws Exception
      */
     public function RequestReport($report, $StartDate = null, $EndDate = null)
     {
@@ -1056,33 +1015,34 @@ class MWSClient{
      * @param $product
      * @return array
      */
-    protected function parseProductFromXML($product): array
+    protected function getProductData(array $product): array
     {
         $array = [];
-        if (!isset($product['Products']['Product']['AttributeSets'])) {
-            $product['Products']['Product'] = $product['Products']['Product'][0];
+
+        if (!isset($product['AttributeSets'])) {
+            $product = $product[0];
         }
-        if (isset($product['Products']['Product']['Identifiers']['MarketplaceASIN']['ASIN'])) {
-            $array['asin'] = $product['Products']['Product']['Identifiers']['MarketplaceASIN']['ASIN'];
+        if (isset($product['Identifiers']['MarketplaceASIN']['ASIN'])) {
+            $array['asin'] = $product['Identifiers']['MarketplaceASIN']['ASIN'];
         }
-        foreach ($product['Products']['Product']['AttributeSets']['ItemAttributes'] as $key => $value) {
+        foreach ($product['AttributeSets']['ItemAttributes'] as $key => $value) {
             if (is_string($key) && is_string($value)) {
                 $array[$key] = $value;
             }else if(is_string($key) && is_array($value)) {
                 $array[$key] = $value;
             }
         }
-        if (isset($product['Products']['Product']['AttributeSets']['ItemAttributes']['SmallImage'])) {
-            $image = $product['Products']['Product']['AttributeSets']['ItemAttributes']['SmallImage']['URL'];
+        if (isset($product['AttributeSets']['ItemAttributes']['SmallImage'])) {
+            $image = $product['AttributeSets']['ItemAttributes']['SmallImage']['URL'];
             $array['medium_image'] = $image;
             $array['small_image'] = str_replace('._SL75_', '._SL50_', $image);
             $array['large_image'] = str_replace('._SL75_', '', $image);;
         }
 
         // Relationships
-        if (isset($product['Products']['Product']['Relationships'])) {
+        if (isset($product['Relationships'])) {
 
-            $relationships = $product['Products']['Product']['Relationships'];
+            $relationships = $product['Relationships'];
 
             if (isset($relationships['VariationParent'])) {
 
@@ -1100,11 +1060,10 @@ class MWSClient{
             }
         }
 
-
         // Sales rang
-        if(isset($product['Products']['Product']['SalesRankings']['SalesRank'])){
+        if(isset($product['SalesRankings']['SalesRank'])){
             $array['ranks'] = [];
-            $tmpRanks = $product['Products']['Product']['SalesRankings']['SalesRank'];
+            $tmpRanks = $product['SalesRankings']['SalesRank'];
             if(is_array($tmpRanks) && array_key_exists('ProductCategoryId', $tmpRanks))
                 $array['ranks'][$tmpRanks['ProductCategoryId']] = (int)$tmpRanks['Rank'];
             else foreach ($tmpRanks as $rank) {

@@ -23,7 +23,16 @@ class TestClient extends TestCase
 
         $this->assertNotEmpty($products['found'], 'Should get 1 product!');
         $this->assertArrayHasKey('asin', end($products['found']), 'Product should have a asin!');
+    }
 
+    public function test_get_one_matching_product_for_id()
+    {
+        $products = $this->handleThrottling(function($asins)  {
+            return $this->getClient()->GetMatchingProductForId($asins);
+        }, [['B00X4MDXOQ']]);
+
+        $this->assertNotEmpty($products['found'], 'Should get 1 product!');
+        $this->assertArrayHasKey('asin', end($products['found']), 'Product should have a asin!');
     }
 
     public function test_get_matching_products()
@@ -71,7 +80,52 @@ class TestClient extends TestCase
             $exception = $e;
         }
         $this->assertNotNull($exception, 'Exception should be trown!');
+    }
 
+    public function test_get_matching_product_for_id()
+    {
+        $asins = ['B00X4MDXOQ', 'B01HJ0VN40', 'B0711DGW5V', 'B00NLKAVL4', 'B010OMOSVK'];
+
+        $products = $this->handleThrottling(function($asins)  {
+            return $this->getClient()->GetMatchingProductForId($asins);
+        }, [$asins]);
+
+        $this->assertNotEmpty($products['found'], 'Should get 5 products!');
+        $this->assertEmpty($products['not_found'], 'Should get 0 products!');
+        $this->assertEquals(2, count($products));
+        $this->assertEquals(5, count($products['found']));
+
+
+        $products = $this->handleThrottling(function($asins)  {
+            return $this->getClient()->GetMatchingProductForId($asins);
+        }, [['B00X4MDXOQ', 'B00X4MDXOQ', 'B00X4MDXOQ', 'asd']]);
+
+        $this->assertEquals(1, count($products['found']));
+        $this->assertEquals(1, count($products['not_found']));
+        $this->assertEquals('asd', $products['not_found'][0]);
+
+        // test max asins
+        $asins = ['B00X4MDXOQ', 'B01HJ0VN40', 'B0711DGW5V', 'B00NLKAVL4', 'B010OMOSVK', '_B00X4MDXOQ'];
+
+        $exception = null;
+        try {
+            $this->handleThrottling(function ($asins) {
+                return $this->getClient()->GetMatchingProductForId($asins);
+            }, [$asins]);
+        } catch (\Exception $e) {
+            $exception = $e;
+        }
+        $this->assertNotNull($exception, 'Exception should be thrown!');
+
+        $exception = null;
+        try {
+            $this->handleThrottling(function ($asins) {
+                return $this->getClient()->GetMatchingProductForId($asins);
+            }, [['++++)']]);
+        } catch (\Exception $e) {
+            $exception = $e;
+        }
+        $this->assertNotNull($exception, 'Exception should be thrown!');
     }
 
     public function test_get_matching_products_with_merge()
@@ -89,6 +143,29 @@ class TestClient extends TestCase
         $products = $this->handleThrottling(function($asins, $merge)  {
             return $this->getClient()->GetMatchingProducts($asins, $merge);
         }, [$products, true]);
+
+        $this->assertEquals(2, count($products['found']), 'Should find 2 products!');
+        $product = end($products['found']);
+        $this->assertArrayHasKey('description', $product, 'Product should have a description!');
+        $this->assertArrayHasKey('asin', $product, 'Product should have a asin!');
+        $this->assertArrayHasKey('seller-sku', $product, 'Product should have a seller-sku!!');
+    }
+
+    public function test_get_matching_product_for_id_with_merge()
+    {
+        $products = [
+            'B00X4MDXOQ' => [
+                'description' => "lorem ipsum ",
+                'seller-sku' => "SKU123-213-NEW",
+            ],
+            'B01HJ0VN40' => [
+                'description' => "lorem ipsum 2",
+                'seller-sku' => "SKU3-OLD",
+            ]
+        ];
+        $products = $this->handleThrottling(function($asins)  {
+            return $this->getClient()->GetMatchingProductForId($asins);
+        }, [$products]);
 
         $this->assertEquals(2, count($products['found']), 'Should find 2 products!');
         $product = end($products['found']);
