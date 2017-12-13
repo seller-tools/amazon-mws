@@ -874,7 +874,8 @@ class MWSClient{
             ]);
             
             if (is_string($result)) {
-                $csv = Reader::createFromString(iconv('CP1252', 'UTF-8', $result));
+                $result = mb_convert_encoding($result, 'UTF-8');
+                $csv = Reader::createFromString($result);
                 $csv->setDelimiter("\t");
                 $headers = str_replace("-", "_", $csv->fetchOne());
                 $result = [];
