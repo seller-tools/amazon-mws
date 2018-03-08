@@ -859,9 +859,10 @@ class MWSClient{
     /**
      * Get a report's content
      * @param string $ReportId
+     * @param bool $useEnclosure
      * @return array on succes
      */
-    public function GetReport($ReportId)
+    public function GetReport($ReportId, $useEnclosure = true)
     {
         $status = $this->GetReportRequestStatus($ReportId);
         
@@ -877,6 +878,10 @@ class MWSClient{
                 $result = mb_convert_encoding($result, 'UTF-8');
                 $csv = Reader::createFromString($result);
                 $csv->setDelimiter("\t");
+                
+                if (!$useEnclosure)
+                    $csv->setEnclosure(chr(0));
+                
                 $headers = str_replace("-", "_", $csv->fetchOne());
                 $result = [];
                 foreach ($csv->setOffset(1)->fetchAll() as $row) {
