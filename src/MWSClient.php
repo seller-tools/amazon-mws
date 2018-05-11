@@ -1004,7 +1004,8 @@ class MWSClient{
             
             $headers = [
                 'Accept' => 'application/xml',
-                'x-amazon-user-agent' => $this->config['Application_Name'] . '/' . $this->config['Application_Version']
+                'x-amazon-user-agent' => $this->config['Application_Name'] . '/' . $this->config['Application_Version'],
+                'Content-Type' => 'application/x-www-form-urlencoded'
             ];
             
             if ($endPoint['action'] === 'SubmitFeed') {
@@ -1058,8 +1059,8 @@ class MWSClient{
                 // If client is only request generator
                 return new MWSRequest($endPoint['method'],
                     $this->config['Region_Url'] . $endPoint['path'],
-                    $requestOptions,
-                    null,
+                    $requestOptions['headers'],
+                    http_build_query($requestOptions['query']),
                     $parse,
                     '1.1');
             }

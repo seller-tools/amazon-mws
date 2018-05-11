@@ -10,7 +10,7 @@ namespace MCS;
 
 
 use GuzzleHttp\Psr7\Request;
-use GuzzleHttp\Psr7\Response;
+use Psr\Http\Message\ResponseInterface;
 
 class MWSRequest extends Request
 {
@@ -21,7 +21,7 @@ class MWSRequest extends Request
         $this->parseCallback = $parseCallback;
     }
 
-    public function parseResponse(Response $response) {
+    public function parseResponse(ResponseInterface $response) {
         return call_user_func($this->parseCallback, $response);
     }
 
