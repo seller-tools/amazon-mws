@@ -963,7 +963,7 @@ class MWSClient{
         };
 
         if($response instanceof MWSRequest) {
-            $response->setParseCallback(function(ResponseInterface $resp) use ($response, $parse) {
+            return $response->setParseCallback(function(ResponseInterface $resp) use ($response, $parse) {
                 $fn = $response->getParseCallback();
                 return call_user_func($parse, $fn($resp));
             });
