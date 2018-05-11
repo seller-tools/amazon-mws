@@ -4,6 +4,7 @@ namespace MCS;
 use DateTime;
 use Exception;
 use DateTimeZone;
+use http\Env\Response;
 use MCS\MWSEndPoint;
 use League\Csv\Reader;
 use League\Csv\Writer;
@@ -806,7 +807,7 @@ class MWSClient{
      * @param string $xmlstring 
      * @return array
      */
-    private function xmlToArray($xmlstring)
+    private static function xmlToArray($xmlstring)
     {
         $languages = [
             'de-DE', 'en-EN', 'es-ES', 'fr-FR', 'it-IT', 'en-US'
@@ -1069,6 +1070,18 @@ class MWSClient{
             }
             throw new Exception($message);
         }  
+    }
+
+    public static function parseResponse(Response $response, $raw = false) {
+        $body = (string) $response->getBody();
+
+        if ($raw) {
+            return $body;
+        } else if (strpos(strtolower($response->getHeader('Content-Type')[0]), 'xml') !== false) {
+            return static::xmlToArray($body);
+        } else {
+            return $body;
+        }
     }
 
     /**
