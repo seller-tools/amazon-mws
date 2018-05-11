@@ -13,6 +13,7 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Exception\BadResponseException;
 use Spatie\ArrayToXml\ArrayToXml;
+use Psr\Http\Message\ResponseInterface;
 
 class MWSClient{
     
@@ -1072,7 +1073,7 @@ class MWSClient{
         }  
     }
 
-    public static function parseResponse(Response $response, $raw = false) {
+    public static function parseResponse(ResponseInterface $response, $raw = false) {
         $body = (string) $response->getBody();
 
         if ($raw) {
