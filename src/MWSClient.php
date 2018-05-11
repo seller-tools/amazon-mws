@@ -1056,7 +1056,7 @@ class MWSClient{
 
             if($this->config['RequestGenerator']) {
                 // If client is only request generator
-                return new MwsRequest($endPoint['method'],
+                return new MWSRequest($endPoint['method'],
                     $this->config['Region_Url'] . $endPoint['path'],
                     $requestOptions,
                     null,
