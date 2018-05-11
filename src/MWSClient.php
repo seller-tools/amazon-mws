@@ -9,6 +9,7 @@ use League\Csv\Reader;
 use League\Csv\Writer;
 use SplTempFileObject;
 use GuzzleHttp\Client;
+use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Exception\BadResponseException;
 use Spatie\ArrayToXml\ArrayToXml;
 
@@ -25,7 +26,8 @@ class MWSClient{
         'Access_Key_ID' => null,
         'Secret_Access_Key' => null,
         'MWSAuthToken' => null,
-        'Application_Version' => '0.0.*'
+        'Application_Version' => '0.0.*',
+        'RequestGenerator' => false
     ];  
     
     private $MarketplaceIds = [
@@ -69,6 +71,15 @@ class MWSClient{
         $this->config['Region_Host'] = $this->MarketplaceIds[$this->config['Marketplace_Id']];
         $this->config['Region_Url'] = 'https://' . $this->config['Region_Host'];
         
+    }
+
+    /**
+     * Set config property
+     * @param $key
+     * @param $value
+     */
+    public function setConfig($key, $value) {
+        $this->config[$key] = $value;
     }
     
     /**
@@ -983,7 +994,14 @@ class MWSClient{
             );
             
             $requestOptions['query'] = $query;
-            
+
+            if($this->config['RequestGenerator']) {
+                // If client is only request generator
+                return new Request($endPoint['method'],
+                    $this->config['Region_Url'] . $endPoint['path'],
+                    $requestOptions);
+            }
+
             $client = new Client();
             
             $response = $client->request(
