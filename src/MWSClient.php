@@ -925,6 +925,42 @@ class MWSClient{
         return false;
         
     }
+
+    /**
+     * Returns a list of products and their attributes, based on a query.
+     * @param string $query
+     * @return array
+     * @throws Exception
+     * @internal param $string [$type = 'ASIN']  the identifier name
+     */
+    public function ListMatchingProducts(string $query)
+    {
+        $array = [
+            'MarketplaceId' => $this->config['Marketplace_Id'],
+            'Query' => $query
+        ];
+
+        $response = $this->request(
+            'ListMatchingProducts',
+            $array,
+            null,
+            false
+        );
+
+        if (isset($response['ListMatchingProductsResult']['Products']['Product'])) {
+            $data = $response['ListMatchingProductsResult']['Products']['Product'];
+
+            if (isset($data['AttributeSets']))
+                $data = [$data];
+
+            return array_map(function ($product){
+                return $this->getProductData($product);
+            }, $data);
+        }
+
+        return false;
+
+    }
     
     /**
      * Request MWS
