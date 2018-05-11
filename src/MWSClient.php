@@ -4,7 +4,6 @@ namespace MCS;
 use DateTime;
 use Exception;
 use DateTimeZone;
-use http\Env\Response;
 use MCS\MWSEndPoint;
 use League\Csv\Reader;
 use League\Csv\Writer;
@@ -949,18 +948,28 @@ class MWSClient{
             false
         );
 
-        if (isset($response['ListMatchingProductsResult']['Products']['Product'])) {
-            $data = $response['ListMatchingProductsResult']['Products']['Product'];
+        $parse = function($response) {
+            if (isset($response['ListMatchingProductsResult']['Products']['Product'])) {
+                $data = $response['ListMatchingProductsResult']['Products']['Product'];
 
-            if (isset($data['AttributeSets']))
-                $data = [$data];
+                if (isset($data['AttributeSets']))
+                    $data = [$data];
 
-            return array_map(function ($product){
-                return $this->getProductData($product);
-            }, $data);
+                return array_map(function ($product){
+                    return $this->getProductData($product);
+                }, $data);
+            }
+            return false;
+        };
+
+        if($response instanceof MWSRequest) {
+            $response->setParseCallback(function(ResponseInterface $resp) use ($response, $parse) {
+                $fn = $response->getParseCallback();
+                return call_user_func($parse, $fn($resp));
+            });
         }
 
-        return false;
+        return $parse($response);
 
     }
     
@@ -1030,33 +1039,40 @@ class MWSClient{
                     true
                 )
             );
-            
+
             $requestOptions['query'] = $query;
+
+            $parse = function(ResponseInterface $response) use ($raw) {
+                $body = (string) $response->getBody();
+
+                if ($raw) {
+                    return $body;
+                } else if (strpos(strtolower($response->getHeader('Content-Type')[0]), 'xml') !== false) {
+                    return $this->xmlToArray($body);
+                } else {
+                    return $body;
+                }
+            };
 
             if($this->config['RequestGenerator']) {
                 // If client is only request generator
-                return new Request($endPoint['method'],
+                return new MwsRequest($endPoint['method'],
                     $this->config['Region_Url'] . $endPoint['path'],
-                    $requestOptions);
+                    $requestOptions,
+                    null,
+                    $parse,
+                    '1.1');
             }
 
             $client = new Client();
-            
+
             $response = $client->request(
-                $endPoint['method'], 
-                $this->config['Region_Url'] . $endPoint['path'], 
+                $endPoint['method'],
+                $this->config['Region_Url'] . $endPoint['path'],
                 $requestOptions
             );
-            
-            $body = (string) $response->getBody();
-            
-            if ($raw) {
-                return $body;    
-            } else if (strpos(strtolower($response->getHeader('Content-Type')[0]), 'xml') !== false) {
-                return $this->xmlToArray($body);          
-            } else {
-                return $body;
-            }
+
+            return $parse($response);
            
         } catch(BadResponseException $e) {
             if ($e->hasResponse()) {
