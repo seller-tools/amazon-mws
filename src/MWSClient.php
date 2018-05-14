@@ -458,38 +458,49 @@ class MWSClient{
             false
         );
 
-        if (isset($response['GetMatchingProductResult']['@attributes'])) {
-            $response['GetMatchingProductResult'] = [
-                $response['GetMatchingProductResult']
-            ];
-        }
+        $parse = function($response) use ($products, $merge) {
+            if (isset($response['GetMatchingProductResult']['@attributes'])) {
+                $response['GetMatchingProductResult'] = [
+                    $response['GetMatchingProductResult']
+                ];
+            }
 
-        $found = [];
-        $not_found = [];
+            $found = [];
+            $not_found = [];
 
-        if (isset($response['GetMatchingProductResult']) && is_array($response['GetMatchingProductResult'])) {
-            foreach ($response['GetMatchingProductResult'] as $result) {
-                $asin = trim($result['@attributes']['ASIN']);
-                if ($result['@attributes']['status'] != 'Success') {
-                    $not_found[] = isset($products[$asin]) ? $products[$asin] : $asin;
-                } else {
-                    $product = $result['Product'];
+            if (isset($response['GetMatchingProductResult']) && is_array($response['GetMatchingProductResult'])) {
+                foreach ($response['GetMatchingProductResult'] as $result) {
+                    $asin = trim($result['@attributes']['ASIN']);
+                    if ($result['@attributes']['status'] != 'Success') {
+                        $not_found[] = isset($products[$asin]) ? $products[$asin] : $asin;
+                    } else {
+                        $product = $result['Product'];
 
-                    $array = $this->getProductData($product);
+                        $array = $this->getProductData($product);
 
-                    if ($merge) {
-                        $array = array_merge($array, $products[$asin]);
+                        if ($merge) {
+                            $array = array_merge($array, $products[$asin]);
+                        }
+
+                        $found[$asin] = $array;
                     }
-
-                    $found[$asin] = $array;
                 }
             }
+
+            return [
+                'found' => $found,
+                'not_found' => $not_found
+            ];
+        };
+
+        if($response instanceof MWSRequest) {
+            $fn = $response->getParseCallback();
+            return $response->setParseCallback(function(ResponseInterface $resp) use ($parse, $fn) {
+                return call_user_func($parse, $fn($resp));
+            });
         }
 
-        return [
-            'found' => $found,
-            'not_found' => $not_found
-        ];
+        return $parse($response);
     }
 
     /**
