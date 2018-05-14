@@ -949,8 +949,11 @@ class MWSClient{
         );
 
         $parse = function($response) {
-            if (isset($response['ListMatchingProductsResult']['Products']['Product'])) {
-                $data = $response['ListMatchingProductsResult']['Products']['Product'];
+            if (isset($response['ListMatchingProductsResult']['Products'])) {
+                if(!isset($response['ListMatchingProductsResult']['Products']['Product']))
+                    $data = [];
+                else
+                    $data = $response['ListMatchingProductsResult']['Products']['Product'];
 
                 if (isset($data['AttributeSets']))
                     $data = [$data];
@@ -963,8 +966,8 @@ class MWSClient{
         };
 
         if($response instanceof MWSRequest) {
-            return $response->setParseCallback(function(ResponseInterface $resp) use ($response, $parse) {
-                $fn = $response->getParseCallback();
+            $fn = $response->getParseCallback();
+            return $response->setParseCallback(function(ResponseInterface $resp) use ($parse, $fn) {
                 return call_user_func($parse, $fn($resp));
             });
         }
