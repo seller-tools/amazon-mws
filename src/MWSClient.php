@@ -848,7 +848,8 @@ class MWSClient{
     public function RequestReport($report, $StartDate = null, $EndDate = null)
     {
         $query = [
-            'ReportType' => $report
+            'ReportType' => $report,
+            'MarketplaceIdList.Id.1' => $this->config['Marketplace_Id'],
         ];
         
         if (!is_null($StartDate)) {
@@ -1011,6 +1012,11 @@ class MWSClient{
         }
         
         if (isset($query['MarketplaceId'])) {
+            unset($query['MarketplaceId.Id.1']);
+            unset($query['MarketplaceIdList.Id.1']);
+        }
+
+        if (isset($query['MarketplaceIdList.Id.1'])) {
             unset($query['MarketplaceId.Id.1']);
         }
         
