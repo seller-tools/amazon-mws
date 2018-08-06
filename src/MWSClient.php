@@ -315,10 +315,13 @@ class MWSClient{
         
         $array = [];
         foreach ($response as $product) {
-            if (isset($product['Product']['LowestOfferListings']['LowestOfferListing'])) {
-                $array[$product['Product']['Identifiers']['MarketplaceASIN']['ASIN']] = $product['Product']['LowestOfferListings']['LowestOfferListing'];
+            $asin = trim($product['@attributes']['ASIN']);
+            $success = trim($product['@attributes']['status']) !== 'Success';
+
+            if($success && isset($product['Product']['LowestOfferListings']['LowestOfferListing'])) {
+                $array[$asin] = $product['Product']['LowestOfferListings']['LowestOfferListing'];
             } else {
-                $array[$product['Product']['Identifiers']['MarketplaceASIN']['ASIN']] = false;
+                $array[$asin] = false;
             }
         }
         return $array;
