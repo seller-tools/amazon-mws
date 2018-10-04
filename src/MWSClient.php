@@ -316,7 +316,7 @@ class MWSClient{
         $array = [];
         foreach ($response as $product) {
             $asin = trim($product['@attributes']['ASIN']);
-            $success = trim($product['@attributes']['status']) !== 'Success';
+            $success = isset($product['@attributes']['status']) && $product['@attributes']['status'] == 'Success';
 
             if($success && isset($product['Product']['LowestOfferListings']['LowestOfferListing'])) {
                 $array[$asin] = $product['Product']['LowestOfferListings']['LowestOfferListing'];
